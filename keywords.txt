@@ -1,0 +1,31 @@
+#######################################
+# Syntax Coloring DFRobot_3DFace
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_3DFace_I2C	KEYWORD1
+DFRobot_3DFace_UART	KEYWORD1
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setStandby	KEYWORD2
+faceMatching	KEYWORD2
+delAllFaceID	KEYWORD2
+faceRegistration	KEYWORD2
+getFaceMassage	KEYWORD2
+directRegistration	KEYWORD2
+lookUpRegistration	KEYWORD2
+lookDownRegistration	KEYWORD2
+turnLeftRegistration	KEYWORD2
+turnRightRegistration	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+DEVICE_ADDR	LITERAL1
