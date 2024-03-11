@@ -46,7 +46,7 @@ void setup()
 
   sUserData_t data;
   sFaceReg_t  faceReg;
-  data = face.getFaceMassage();
+  data = face.getFaceMessage();
   if(data.result == true){
     Serial.print("user count = ");
     Serial.println(data.user_count);
@@ -77,7 +77,7 @@ void setup()
 void loop()
 {
   sFaceMatching_t matching;
-  Serial.println("face matching !");
+  Serial.println("face matching ..............");
   matching = face.faceMatching();
   if(matching.result){
     Serial.println("face matching success!");

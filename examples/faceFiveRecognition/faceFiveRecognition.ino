@@ -46,7 +46,7 @@ void setup()
 
   sUserData_t data;
   sFaceReg_t  faceReg;
-  data = face.getFaceMassage();
+  data = face.getFaceMessage();
   if(data.result == true){
     Serial.print("user count = ");
     Serial.println(data.user_count);
@@ -71,7 +71,7 @@ void setup()
   if(faceReg.result){
     Serial.print("register      direction = ");
     Serial.println(faceReg.direction);
-    Serial.println("Direct view record success");
+    Serial.println("look up view record success");
     Serial.println();
     Serial.println("Please look down.");
     faceReg = face.lookDownRegistration();
@@ -79,7 +79,7 @@ void setup()
   if(faceReg.result){
     Serial.print("register      direction = ");
     Serial.println(faceReg.direction);
-    Serial.println("Direct view record success");
+    Serial.println("loop down view record success");
     Serial.println();
     Serial.println("Please look to the left.");
     faceReg = face.turnLeftRegistration();
@@ -87,13 +87,14 @@ void setup()
   if(faceReg.result){
     Serial.print("register      direction = ");
     Serial.println(faceReg.direction);
-    Serial.println("Direct view record success");
+    Serial.println("turn left view record success");
     Serial.println();
     Serial.println("Please look to the right.");
     faceReg = face.turnRightRegistration("3333333333333333333333");
   }
 
   if(faceReg.result){
+    Serial.println("turn right view record success");
     Serial.println("five face resgistering success!");
     Serial.print("regiseter     user id = ");
     Serial.println(faceReg.userID);
@@ -111,7 +112,7 @@ void setup()
 void loop()
 {
   sFaceMatching_t matching;
-  Serial.println("face matching !");
+  Serial.println("face matching ..............");
   matching = face.faceMatching();
   if(matching.result){
     Serial.println("face matching success!");

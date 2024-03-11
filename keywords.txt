@@ -13,15 +13,15 @@ DFRobot_3DFace_UART	KEYWORD1
 #######################################
 
 setStandby	KEYWORD2
-faceMatching	KEYWORD2
 delAllFaceID	KEYWORD2
+faceMatching	KEYWORD2
 faceRegistration	KEYWORD2
-getFaceMassage	KEYWORD2
 directRegistration	KEYWORD2
 lookUpRegistration	KEYWORD2
 lookDownRegistration	KEYWORD2
 turnLeftRegistration	KEYWORD2
 turnRightRegistration	KEYWORD2
+getFaceMessage	KEYWORD2
 
 
 #######################################
