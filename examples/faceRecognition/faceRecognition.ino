@@ -77,7 +77,7 @@ void setup()
 void loop()
 {
   sFaceMatching_t matching;
-  Serial.println("face matching !");
+  Serial.println("face matching ..............");
   matching = face.faceMatching();
   if(matching.result){
     Serial.println("face matching success!");

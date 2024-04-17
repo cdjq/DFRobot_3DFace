@@ -51,7 +51,7 @@ bool DFRobot_3DFace::delFaceID(uint16_t number)
     delay(100);
     len = readReg(0, rx_temp, 0);
     if(len != 0){
-      if(tx_temp[ERROR_CODE] == C_SUCCESS){
+      if(rx_temp[ERROR_CODE] == C_SUCCESS){
         return true;
       }else{
         return false;
@@ -74,7 +74,7 @@ bool DFRobot_3DFace::delAllFaceID(void)
     delay(100);
     len = readReg(0, rx_temp, 0);
     if(len != 0){
-      if(tx_temp[ERROR_CODE] == C_SUCCESS){
+      if(rx_temp[ERROR_CODE] == C_SUCCESS){
         return true;
       }else{
         return false;
@@ -245,7 +245,7 @@ sUserData_t DFRobot_3DFace::getFaceMessage(void)
   delay(100);
   len = readReg(REG_READ_AT_LEN, rx_temp, 0);
   if(len != 0){
-    if(tx_temp[ERROR_CODE] != C_SUCCESS){
+    if(rx_temp[ERROR_CODE] != C_SUCCESS){
       data.result = false;
     }
     data.user_count = rx_temp[7];
