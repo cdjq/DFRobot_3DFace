@@ -161,6 +161,7 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
 sFaceMatching_t DFRobot_3DFace::faceMatching(void)
 {
   sFaceMatching_t data;
+  uint8_t number = 0;
   uint16_t len = 0;
   int8_t count = -1;
   uint8_t tx_temp[40] = {0xEF, 0xAA, 0x12, 0x00, 0x02};
@@ -172,6 +173,13 @@ sFaceMatching_t DFRobot_3DFace::faceMatching(void)
   delay(100);
   writeReg(REG_WRITE_AT, tx_temp, 8);
   while(1){
+    if(number++ > 20){
+      delay(100);
+      setStandby();
+      data.result = false;
+      return data;
+    }
+    //Serial.println(number);
     delay(500);
     len = readReg(REG_READ_AT_LEN, rx_temp, 0);
     if(len != 0){

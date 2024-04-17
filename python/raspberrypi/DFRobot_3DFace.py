@@ -317,6 +317,7 @@ class DFRobot_3DFace(object):
       @brief face_matching
       @return match
     '''
+    number = 0
     face = struct_face_matching()
     tx_temp = [0xEF, 0xAA, 0x12, 0x00, 0x02, 0x00, 0x00, 0x00]
     tx_temp[5] = 0x00
@@ -328,6 +329,12 @@ class DFRobot_3DFace(object):
     self.write_reg(REG_WRITE_AT, tx_temp)
     if self.__uart_i2c == I2C_MODE:
       while True:
+        if number > 20:
+          time.sleep(0.1)
+          self.set_standby()
+          face.result = False
+          return face
+        number = number + 1
         time.sleep(0.5)
         rslt = self.read_reg(REG_READ_AT_LEN, 5)
         len1 = rslt[0]
