@@ -15,15 +15,14 @@ import os
 sys.path.append("../")
 import time
 import RPi.GPIO as GPIO
-from DFRobot_3DFace import *
-
+from python.raspberrypi.DFRobot_3DFace import *
 
 '''
   Select to use i2c or UART
   I2C_MODE
   UART_MODE
 '''
-ctype = UART_MODE
+ctype = I2C_MODE
 
 if ctype == I2C_MODE:
   I2C_1 = 0x01
@@ -36,63 +35,19 @@ def setup():
   while (face.begin() == False):
     print("Sensor initialize failed!!")
     time.sleep(1)
-  data = face.get_face_message()
-  if data.result == True:
-    print("user count = " + str(data.user_count))
-  status = face.delete_all_face_id()
-  if status == True:
-    print("delete face id success")
-  time.sleep(2)
-  
-  print("face resgistering !")
-  print("Please look straight into the camera.")
-  
-  face_reg = face.direct_registration()
-  if face_reg.result:
-    print("register direction = ", face_reg.direction)
-    print("Direct view record success")
-    print("Please look up.")
-    face_reg = face.look_up_registration()
-
-  if face_reg.result:
-    print("register direction = ", face_reg.direction)
-    print("look up view record success")
-    print("Please look down.")
-    face_reg = face.look_down_registration()
-  
-  if face_reg.result:
-    print("register direction = ", face_reg.direction)
-    print("look down view record success")
-    print("Please look to the left.")
-    face_reg = face.turn_left_registration()
-    
-  if face_reg.result:
-    print("register direction = ", face_reg.direction)
-    print("turn left view record success")
-    print("Please look to the right.")
-    face_reg = face.turn_right_registration("five_raspberry")
-
-  if face_reg.result:
-    print("turn right view record success")
-    print("five face resgistering success!")
-    print("register user id = ", face_reg.user_id)
-    print("register direction = ", face_reg.direction)
-  else:
-    print("five face resgistering error!");
-    print("error code = ", faceReg.errorCode)
-  
+  face.set_standby()
+  face.get_face_message()
+  face.delete_all_face_id()
+  time.sleep(1)
+  face.direct_registration()
+  face.look_up_registration()
+  face.look_down_registration()
+  face.turn_left_registration()
+  face.turn_right_registration("21111")
 
 def loop():
-  print("matching face .............")
-  match = face.face_matching()
-  if match.result:
-    print("matching success")
-    print("matching user ID = ", match.user_id)
-    print("matching name = ", match.name)
-    print("")
-  else:
-    print("matching error")
-    print("")
+  face.face_matching()
+  time.sleep(0.1)
 
 if __name__ == "__main__":
   setup()

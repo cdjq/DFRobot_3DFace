@@ -15,7 +15,7 @@ import os
 sys.path.append("../")
 import time
 import RPi.GPIO as GPIO
-from DFRobot_3DFace import *
+from python.raspberrypi.DFRobot_3DFace import *
 
 '''
   Select to use i2c or UART
@@ -36,46 +36,13 @@ def setup():
     print("Sensor initialize failed!!")
     time.sleep(1)
   face.set_standby()
-  print("Sensor initialize success!!")
-  
-  data = face.get_face_message()
-  if data.result == True:
-    print("user count = " + str(data.user_count))
-  
-  #status = face.delete_all_face_id()
-  status = face.delete_face_id(1)
-  
-  if status == True:
-    print("delete face id success !")
-  else:
-    print("delete face id faild !")
-  
+  face.get_face_message()
+  face.delete_all_face_id()
   time.sleep(1)
-  
-  face_reg = face.face_registration("raspberry 18")
-  if face_reg.result == True:
-    print("face resgistering success!")
-    print("regiseter user id = " + str(face_reg.user_id));
-    print("register direction = " + str(face_reg.direction))
-  else:
-    print("face resgistering faild!")
-    print("error code = " + str(face_reg.error_code))
-    
-  
-  
+  face.face_registration("raspberry test")
 def loop():
-  print("matching face .............")
-  match = face.face_matching()
-  if match.result:
-    print("matching success")
-    print("matching user ID = ", match.user_id)
-    print("matching name = ", match.name)
-    print("")
-  else:
-    print("matching error")
-    print("")
-  
-  time.sleep(1)
+  face.face_matching()
+  time.sleep(0.1)
 
 if __name__ == "__main__":
   setup()

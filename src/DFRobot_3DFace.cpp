@@ -23,6 +23,9 @@ bool DFRobot_3DFace::setStandby(void)
     delay(100);
     len = readReg(0, rx_temp, 0);
     if(len != 0){
+      // for(uint8_t i = 0; i < len; i++){
+      //   Serial.print(rx_temp[i], HEX);
+      // } Serial.println();
       return true;
     }
   }
@@ -37,15 +40,18 @@ bool DFRobot_3DFace::delFaceID(uint16_t number)
   tx_temp[DATA_CODE] = (uint8_t)(number>>8);
   tx_temp[DATA_CODE+1] = (uint8_t)(number);
   tx_temp[7] = getParityCheck(tx_temp, 7);
+
   setStandby();
   delay(100);
+
   writeReg(REG_WRITE_AT, tx_temp, 8);
   delay(100);
+
   while(1){
     delay(100);
     len = readReg(0, rx_temp, 0);
     if(len != 0){
-      if(rx_temp[ERROR_CODE] == C_SUCCESS){
+      if(tx_temp[ERROR_CODE] == C_SUCCESS){
         return true;
       }else{
         return false;
@@ -68,7 +74,7 @@ bool DFRobot_3DFace::delAllFaceID(void)
     delay(100);
     len = readReg(0, rx_temp, 0);
     if(len != 0){
-      if(rx_temp[ERROR_CODE] == C_SUCCESS){
+      if(tx_temp[ERROR_CODE] == C_SUCCESS){
         return true;
       }else{
         return false;
@@ -119,6 +125,7 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
   tx_temp[40] = repetition;
   tx_temp[41] = timerout;
   tx_temp[45] = getParityCheck(tx_temp, 45);
+
   if(regType == ONE_REG || direction == eDirectView){
     delay(100);
     setStandby();
@@ -151,7 +158,6 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
   }
   return data;
 }
-
 sFaceMatching_t DFRobot_3DFace::faceMatching(void)
 {
   sFaceMatching_t data;
@@ -214,6 +220,10 @@ int8_t DFRobot_3DFace::waitTrueData(uint8_t *data, uint8_t len)
       temp[count++] = i;
     }
   }
+  // for(uint8_t i = 0; i < len; i++){
+  //   Serial.print(data[i] ,HEX);
+  //   Serial.print(" ");
+  // } Serial.println();
   if(count == 2){
     return temp[1];
   }
@@ -222,7 +232,6 @@ int8_t DFRobot_3DFace::waitTrueData(uint8_t *data, uint8_t len)
   }
   return -1;
 }
-
 sUserData_t DFRobot_3DFace::getFaceMessage(void)
 {
   sUserData_t data;
@@ -236,7 +245,7 @@ sUserData_t DFRobot_3DFace::getFaceMessage(void)
   delay(100);
   len = readReg(REG_READ_AT_LEN, rx_temp, 0);
   if(len != 0){
-    if(rx_temp[ERROR_CODE] != C_SUCCESS){
+    if(tx_temp[ERROR_CODE] != C_SUCCESS){
       data.result = false;
     }
     data.user_count = rx_temp[7];
@@ -256,6 +265,7 @@ uint8_t DFRobot_3DFace::getParityCheck(uint8_t * p ,int len)
   }
   return parityCheck;
 }
+
 
 DFRobot_3DFace_I2C::DFRobot_3DFace_I2C(TwoWire *pWire, uint8_t addr)
 {
@@ -281,7 +291,7 @@ void DFRobot_3DFace_I2C::writeReg(uint8_t reg, uint8_t *data, uint8_t len)
     _pWire->beginTransmission(this->_I2C_addr);
     _pWire->write(REG_WRITE_AT_LONG);
     _pWire->write(data, 31);
-    _pWire->endTransmission();
+    _pWire->endTransmission(false);
     len -= 31;
     _pWire->beginTransmission(this->_I2C_addr);
     _pWire->write(reg);
@@ -313,6 +323,8 @@ int16_t DFRobot_3DFace_I2C::readReg(uint8_t reg,uint8_t *data,uint8_t len)
   if(rxLen == 0){
     return 0;       // data = 0;
   }else{
+    // Serial.print("rxLen    =   ");
+    // Serial.println(rxLen);
     while(rxLen){
       if(rxLen > 32){
         _pWire->beginTransmission(this->_I2C_addr);
@@ -341,6 +353,9 @@ int16_t DFRobot_3DFace_I2C::readReg(uint8_t reg,uint8_t *data,uint8_t len)
   }
   return i;
 }
+
+
+
 
 #if defined(ARDUINO_AVR_UNO) || defined(ESP8266)
   DFRobot_3DFace_UART::DFRobot_3DFace_UART(SoftwareSerial *sSerial, uint32_t Baud)
@@ -389,7 +404,6 @@ int16_t DFRobot_3DFace_UART::readReg(uint8_t reg, uint8_t *data, uint8_t len)
   uint32_t nowtime = millis();
   while(millis() - nowtime < TIME_OUT){
     while(_serial->available() > 0){
-      //if(i == len){ return i; }       // Prevent data overflow
       data[i++] = _serial->read();
     }
   }

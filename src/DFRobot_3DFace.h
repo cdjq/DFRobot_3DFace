@@ -20,12 +20,15 @@
 #include "HardwareSerial.h"
 #endif
 
+
+
 typedef struct {
   uint16_t userID;
   bool result;
   uint8_t direction;
   uint8_t errorCode;
 }sFaceReg_t;
+
 
 typedef struct {
   uint16_t userID;
@@ -35,6 +38,7 @@ typedef struct {
   uint8_t state;
   uint8_t errorCode;
 }sFaceMatching_t;
+
 
 typedef struct {
   uint8_t user_count;
@@ -58,6 +62,7 @@ typedef enum{
   elookRight = 0x1f,
 }eResponseView_t;
 
+
 typedef enum{
   eSuccess        = 0x00,
   eReject         = 0x01,
@@ -78,23 +83,38 @@ class DFRobot_3DFace{
 public:
   #define REG_GERENEL_CMD 0x10
   #define DEVICE_ADDR     0x20
-  #define TIME_OUT        0x64     ///< time out
-  #define I2C_FLAG        0x01
-  #define UART_FLAG       0x02
-  #define DATA_CODE       0x05
-  #define ERROR_CODE      0x06
-  #define C_SUCCESS       0x00
-  #define C_REJECT        0x01
-  // The registration mode is administrator mode or user mode
+  #define TIME_OUT        200     ///< time out
+  #define I2C_FLAG        1
+  #define UART_FLAG       2
+  #define I2C_ID          30
+  #define MAX_SIZE        200
+
+  #define DATA_CODE   0x6
+
+  #define ERROR_CODE  0x6
+  #define C_SUCCESS   0x0
+  #define C_REJECT    0x1
+
+
+  // 注册模式是管理员模式还是用户模式
   #define USER 0
   #define ADMIN 1
-  // Single registration or five-item registration
+
+  // 单项注册或五项注册
   #define ONE_REG  1
   #define FIVE_REG 0
+
+
   #define REG_WRITE_AT_LONG       0x39
   #define REG_WRITE_AT            0x40
   #define REG_READ_AT_LEN         0x41
   #define REG_READ_AT             0x42
+
+
+
+
+
+
   DFRobot_3DFace();
   ~DFRobot_3DFace();
   uint8_t  uartI2CFlag = 0;
