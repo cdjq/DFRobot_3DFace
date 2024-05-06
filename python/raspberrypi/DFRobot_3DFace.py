@@ -27,6 +27,7 @@ LOOK_UP_VIEW = 0x10
 LOOK_DOWN_VIEW = 0X08
 LOOK_LEFT_VIEW = 0X04
 LOOK_RIGHT_VIEW = 0X02
+
 REG_WRITE_AT_LONG = 0x39
 REG_WRITE_AT = 0x40
 REG_READ_AT_LEN = 0x41
@@ -34,7 +35,24 @@ REG_READ_AT = 0x42
 ERROR_CODE = 0x6
 C_SUCCESS = 0x0
 C_REJECT = 0x1
-  
+
+
+
+class enum_response_code:
+  def __init__(self):
+    self.eSuccess = 0x00
+    self.eReject = 0x01
+    self.eTermination = 0x02
+    self.eMessErr = 0x03
+    self.eCrameErr = 0x04
+    self.eError = 0x05
+    self.eParamErr = 0x06
+    self.eMemoryErr = 0x07
+    self.eUserNoExist = 0x08
+    self.eUserUserLimit = 0x09
+    self.eFaceExist = 0x0A
+    self.eLivingErr = 0x0C
+    self.eTimerout = 0x0D
 
 class struct_result_data:
   def __init__(self):
@@ -59,6 +77,8 @@ class struct_face_matching:
     self.state  = 0
     self.error_code = 0
 
+_error_code = enum_response_code()
+ 
 class DFRobot_3DFace(object):
   __uart_i2c     =  0
   __speed_null_count = 0
@@ -75,13 +95,86 @@ class DFRobot_3DFace(object):
   def begin(self):
     '''!
       @brief begin
-      @return True 
+      @return True or False 
     '''
     if self.__uart_i2c == UART_MODE:
-      self.read_reg(REG_READ_AT_LEN, 0)  # flash uart rx
-    return True
+      tx_temp = [0x55]
+      self.write_reg(REG_WRITE_AT, tx_temp)
+      time.sleep(0.1)  
+      rslt = self.read_reg(REG_READ_AT_LEN, 0)
+      if rslt[0] == tx_temp[0]:
+        rslt = self.read_reg(REG_READ_AT_LEN, 0)
+        return True
+    else:
+      rslt = self.read_reg(REG_READ_AT_LEN, 5)
+      time.sleep(0.1)
+      length = rslt[0]
+      if(length != 0):
+        rslt = self.read_reg(REG_READ_AT, length)
+      return True
+    return False
 
-  def set_standby(self):
+  def get_moudle_state(self):
+    '''!
+      @brief get moudle state 
+      @return status
+      @retval -1 or 1 is busy state 
+      @retval 0 is idle state
+    '''
+    length = 0
+    tx_temp = [0xEF, 0xAA, 0x11, 0x00, 0x00, 0x11]
+    self.write_reg(REG_WRITE_AT, tx_temp)
+    if self.__uart_i2c == I2C_MODE:
+      while True:
+        time.sleep(0.1)
+        rslt = self.read_reg(REG_READ_AT_LEN, 5)
+        length = rslt[0]
+        if(length != 0):
+          rslt = self.read_reg(REG_READ_AT, length)
+          return rslt[7]
+    else:
+      while True:
+        time.sleep(0.1)
+        rslt = self.read_reg(REG_READ_AT_LEN, 0)
+        result_list = [byte for byte in rslt]
+        if len(result_list) != 0:
+          return rslt[7]
+    return -1
+
+  def anaysis_code(self, error_code):
+    '''!
+      @brief anaysis error code 
+      @param error_code
+      @return error cause
+    '''
+    if error_code == _error_code.eReject:
+      return "rejected the command"
+    elif error_code == _error_code.eTermination:
+      return "input/matching algorithm has been terminated"
+    elif error_code == _error_code.eMessErr:
+      return "Sending message error"
+    elif error_code == _error_code.eCrameErr:
+      return "Camera failed to open"
+    elif error_code == _error_code.eError:
+      return "unknown error"
+    elif error_code == _error_code.eParamErr:
+      return "Invalid parameter"
+    elif error_code == _error_code.eMemoryErr:
+      return "memory less"
+    elif error_code == _error_code.eUserNoExist:
+      return "no recorded users"
+    elif error_code == _error_code.eUserUserLimit:
+      return "record exceeds the maximum user"
+    elif error_code == _error_code.eFaceExist:
+      return "Face has been recorded"
+    elif error_code == _error_code.eLivingErr:
+      return "Biopsy failure"
+    elif error_code == _error_code.eTimerout:
+      return "timer out"
+    else:
+      return "timer out"
+  
+  def set_standby_mode(self):
     '''!
       @brief Set it to standby mode. 
       @n     The driver module can work properly only in this mode
@@ -104,6 +197,20 @@ class DFRobot_3DFace(object):
         result_list = [byte for byte in rslt]
         if len(result_list) != 0:
           return True
+
+  def set_standby(self):
+    '''!
+      @brief Set it to standby mode. 
+      @n     The driver module can work properly only in this mode
+      @return True or False
+    '''
+    if -1 != self.get_moudle_state():
+      return True
+    else:
+      if self.set_standby_mode() == True:
+        return True
+      else:
+        return False
 
   def delete_face_id(self, number):
     '''!
@@ -252,27 +359,26 @@ class DFRobot_3DFace(object):
     if reg_type == ONE_REG or direction == DIRECT_VIEW:
       time.sleep(0.1)
       self.set_standby()
-      time.sleep(0.1)
     self.write_reg(REG_WRITE_AT, tx_temp)
-    i2c_count = 0    
+    time.sleep(2)
+    i2c_count = 0
     if self.__uart_i2c == I2C_MODE:
       while True:
         i2c_count += 1
-        if i2c_count > 20:
+        if i2c_count > 50:
           time.sleep(0.1)
           self.set_standby()
-          return face  
-        time.sleep(0.1)
+          return face
+        time.sleep(0.5)
         rslt = self.read_reg(REG_READ_AT_LEN, 5)
         len1 = rslt[0]
         if len1 != 0:
           rslt = self.read_reg(REG_READ_AT, len1)
-          time.sleep(0.1)
           count = self.wait_true_data(rslt, len1)
           if count != -1:
             time.sleep(0.1)
-            face.error_code = rslt[count+6]
-            if rslt[ERROR_CODE] != C_SUCCESS:
+            face.error_code = rslt[count+ERROR_CODE]
+            if rslt[count+ERROR_CODE] != C_SUCCESS:
               face.result = False
             else:
               face.result = True
@@ -280,7 +386,6 @@ class DFRobot_3DFace(object):
               face.direction = rslt[count+9]
               rslt = self.read_reg(REG_READ_AT_LEN, 5)
               len2 = rslt[0]
-              rslt = self.read_reg(REG_READ_AT, len2)
               if reg_type == ONE_REG or direction == LOOK_RIGHT_VIEW:
                 time.sleep(0.1)
                 self.set_standby()    
@@ -299,8 +404,8 @@ class DFRobot_3DFace(object):
           count = self.wait_true_data(result_list, len1)
           if count != -1:
             time.sleep(0.1)
-            face.error_code = rslt[count+6]
-            if rslt[ERROR_CODE] != C_SUCCESS:
+            face.error_code = rslt[count+ERROR_CODE]
+            if rslt[count+ERROR_CODE] != C_SUCCESS:
               face.result = False
             else:
               face.result = True
@@ -317,11 +422,10 @@ class DFRobot_3DFace(object):
       @brief face_matching
       @return match
     '''
-    number = 0
     face = struct_face_matching()
     tx_temp = [0xEF, 0xAA, 0x12, 0x00, 0x02, 0x00, 0x00, 0x00]
     tx_temp[5] = 0x00
-    tx_temp[6] = 0x15
+    tx_temp[6] = 0x0A
     tx_temp[7] = self.get_parity_check(tx_temp, 7)    
     time.sleep(0.1)
     self.set_standby()
@@ -329,12 +433,6 @@ class DFRobot_3DFace(object):
     self.write_reg(REG_WRITE_AT, tx_temp)
     if self.__uart_i2c == I2C_MODE:
       while True:
-        if number > 20:
-          time.sleep(0.1)
-          self.set_standby()
-          face.result = False
-          return face
-        number = number + 1
         time.sleep(0.5)
         rslt = self.read_reg(REG_READ_AT_LEN, 5)
         len1 = rslt[0]
@@ -343,10 +441,10 @@ class DFRobot_3DFace(object):
           count = self.wait_true_data(rslt, len1)
           if count != -1:
             time.sleep(0.1)
-            face.error_code = rslt[count+6]
-            if rslt[ERROR_CODE] != C_SUCCESS:
+            face.error_code = rslt[count+ERROR_CODE]
+            if rslt[count+ERROR_CODE] != C_SUCCESS:
               face.result = False
-            else:            
+            else:
               face.result = True
               face.user_id = (rslt[count+7] << 8) | rslt[count+8]
               face.admin = rslt[count+41]
@@ -354,18 +452,11 @@ class DFRobot_3DFace(object):
               char_list = [chr(num) for num in rslt[count+9: count+9+32]]
               result_string = ''.join(char_list)
               face.name = result_string
-            time.sleep(0.1)
-            rslt = self.read_reg(REG_READ_AT_LEN, 5)
-            len1 = rslt[0]
-            time.sleep(0.1)
-            rslt = self.read_reg(REG_READ_AT, len1)
-            time.sleep(0.1)
             self.set_standby()
             time.sleep(0.1)    
             return face
     else:
       while True:
-        time.sleep(1.2)      # must delay time
         rslt = self.read_reg(REG_READ_AT_LEN, 0)
         result_list = [byte for byte in rslt]
         len1 = len(result_list)
@@ -373,10 +464,13 @@ class DFRobot_3DFace(object):
           count = self.wait_true_data(result_list, len1)
           if count != -1:
             time.sleep(0.1)
-            face.error_code = result_list[count+6]
-            if rslt[ERROR_CODE] != C_SUCCESS:
+            face.error_code = result_list[count+ERROR_CODE]
+            if rslt[count+ERROR_CODE] != C_SUCCESS:
               face.result = False
             else:
+              if(len1 < 44):
+                face.result = False
+                return face
               face.result = True
               face.user_id = (result_list[count+7] << 8) | result_list[count+8]
               face.admin = result_list[count+41]
@@ -399,7 +493,7 @@ class DFRobot_3DFace(object):
     '''
     for i in range(len(data)):
       if data[i] == 0xEF and data[i+1] == 0xAA and data[i+2] == 0x00:
-        return 0
+        return i
     return -1
     
   def get_face_message(self):
@@ -447,7 +541,7 @@ class DFRobot_3DFace(object):
     '''!
       @brief get_parity_check
       @param p data point
-      @param len
+      @param length
       @return check_result
     '''
     parity_check = 0
@@ -517,6 +611,9 @@ class DFRobot_3DFace_UART(DFRobot_3DFace):
     timenow = time.time()  
     while(time.time() - timenow) <= 0.5:
       count = self.ser.inWaiting()
+      if count != 0:
+        time.sleep(0.05)  # recv all data
+        count = self.ser.inWaiting()
       if count != 0:
         if len == 0:
           recv = self.ser.read(count)

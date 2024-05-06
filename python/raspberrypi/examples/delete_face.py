@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 '''!
-  @file face_recoognition.py
-  @brief Register and recognize faces
+  @file delete_face.py
+  @brief delete face id
   @copyright  Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
   @license    The MIT License (MIT)
   @author     [ZhixinLiu](zhixin.liu@dfrobot.com)
@@ -12,9 +12,8 @@
 from __future__ import print_function
 import sys
 import os
-import time
-import random
 sys.path.append("../")
+import time
 import RPi.GPIO as GPIO
 from DFRobot_3DFace import *
 
@@ -36,26 +35,35 @@ def setup():
   while (face.begin() == False):
     print("Sensor initialize failed!!")
     time.sleep(1)
-
-  print("Sensor initialize success!!")  
+  face.set_standby()
+  print("Sensor initialize success!!")
+  
   data = face.get_face_message()
   if data.result == True:
     print("user count = " + str(data.user_count))
-    
-  print("face resgistering !")
-  random_int = random.randint(1, 1000)
-  result_string = "raspberry:" + str(random_int)
-  face_reg = face.face_registration(result_string)
-  if face_reg.result == True:
-    print("face resgistering success!")
-    print("register name = "+str(result_string))
-    print("register user id = " + str(face_reg.user_id));
-    print("register direction = " + str(face_reg.direction))
+  
+  
+  '''status = face.delete_all_face_id()
+  if status == True:
+    print("delete face id success !")'''
+  
+  status = face.delete_face_id(1)
+  if status == True:
+    print("delete face id success !")
   else:
-    print("five register faild cause = "+ str(face.anaysis_code(face_reg.error_code)))
-    
+    print("delete face id faild !")
+  
+  time.sleep(1)
+  
+   
+  
 def loop():
+  data = face.get_face_message()
+  if data.result == True:
+    print("user count = " + str(data.user_count))
   time.sleep(1)
 
 if __name__ == "__main__":
   setup()
+  while True:
+    loop()

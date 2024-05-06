@@ -3,11 +3,11 @@
 
 这是一款内置自研嵌入式系统3D深度还原算法、3D人脸识别算法及多模态活体防范算法,能够有效保障用户信息及解锁安全性，在99%通过率的前提下，能够做到低于百万分之一的误识率。同时使用多模态活体防伪算法，能有效屏蔽照片、视频及各种头模和假人的攻击。
 
-![正反面svg效果图](/resources/images/xxx.jpg) 
+![正反面svg效果图](/resources/images/SEN0625.jpg) 
 
 ## 产品链接(https://www.dfrobot.com.cn)
 
-    SKU：xxx
+    SKU：SEN0625
 
 ## 目录
 
@@ -33,11 +33,25 @@
 
 ```C++
   /**
-   * @fn setStandby
-   * @brief 设置为待机模式，此模式下才正常驱动模块
-   * @return true or false
+   * @fn anaysisCode
+   * @brief 解析错误码
+   * @param errorCode
+   * @n       eSuccess      成功
+   * @n       eReject       模组拒绝该命令
+   * @n       eTermination  录入匹配算法已终止
+   * @n       eMessErr      发送消息错误
+   * @n       eCrameErr     相机打开失败
+   * @n       eError        未知错误
+   * @n       eParamErr     无效的参数
+   * @n       eMemoryErr    内存不足
+   * @n       eUserNoExist  没用已经录入的用户
+   * @n       eUserUserLimit  录入超过最大的用户数量
+   * @n       eFaceExist    人脸已经录入
+   * @n       eLivingErr    活体检测失败
+   * @n       eTimerout     录入或者解锁超时
+   * @return cause string
    */
-  bool setStandby(void);
+  const char *anaysisCode(eResponseCode_t errorCode);
 
   /**
    * @fn delFaceID

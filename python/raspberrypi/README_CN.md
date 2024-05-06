@@ -2,12 +2,12 @@
 - [English Version](./README.md)
 
 这是一款内置自研嵌入式系统3D深度还原算法、3D人脸识别算法及多模态活体防范算法,能够有效保障用户信息及解锁安全性，在99%通过率的前提下，能够做到低于百万分之一的误识率。同时使用多模态活体防伪算法，能有效屏蔽照片、视频及各种头模和假人的攻击。
-![正反面svg效果图](../../resources/images/TEL0157.jpg)
+![正反面svg效果图](../../resources/images/SEN0625.jpg)
 
 
-## 产品链接(https://www.dfrobot.com.cn/goods-3115.html)
+## 产品链接(https://www.dfrobot.com.cn)
 
-    SKU：SEN0609   SEN0610
+    SKU：SEN0625
 
 ## 目录
 
@@ -31,28 +31,30 @@
 sudo git clone https://github.com/DFRobot/DFRobot_3DFace
 ```
 
-1. 打开并运行例程，要执行一个例程demo_x.py，请在命令行中输入python demo_x.py。例如，要执行 get_mm wavewave.py例程，你需要输入:
+1. 打开并运行例程，要执行一个例程demo_x.py，请在命令行中输入python demo_x.py。例如，要执行 face_matching.py例程，你需要输入:
 
 ```
-python  motion_range_velocity.py
+python  face_matching.py
 或 
-python2 motion_range_velocity.py
+python2 face_matching.py
 或 
-python3 motion_range_velocity.py
+python3 face_matching.py
 ```
 
 ## 方法
 
 ```python
-  def begin(self):
+
+  def anaysis_code(self, error_code):
     '''!
-      @brief begin
-      @return True 
+      @brief 解析错误码
+      @param error_code
+      @return 错误码对应的原因
     '''
 
-  def set_standby(self):
+  def begin(self):
     '''!
-      @brief 设置为待机模式，此模式下才正常驱动模块
+      @brief 初始化传感器
       @return True or False
     '''
 

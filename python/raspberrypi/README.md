@@ -2,11 +2,11 @@
 - [中文版](./README_CN.md)
 This is a built-in self-developed embedded system 3D depth restoration algorithm, 3D face recognition algorithm and multi-modal live prevention algorithm, which can effectively protect user information and unlock security, under the premise of 99% pass rate, can achieve less than one million error rate. At the same time, the multi-modal live anti-counterfeiting algorithm can effectively shield the attacks of photos, videos and various head models and dummies.
 
-![效果图](../../resources/images/face.jpg)
+![效果图](../../resources/images/SEN0625.jpg)
 
 ## Product Link(https://www.dfrobot.com)
 
-    SKU：xxx
+    SKU：SEN0625
 
 ## Table of Contents
 
@@ -29,30 +29,31 @@ Provides an Arduino library that has the following features:
 sudo git clone https://github.com/DFRobot/DFRobot_3DFace
 ```
 
-1. Open and run the routine. To execute a routine demo_x.py, enter python demo_x.py in the command line. For example, to execute the routine get_mm wavewave.py, you need to enter:
+1. Open and run the routine. To execute a routine demo_x.py, enter python demo_x.py in the command line. For example, to execute the routine face_matching.py, you need to enter:
 
 ```
-python face_recognition.py
+python face_matching.py
 or 
-python2 face_recognition.py
+python2 face_matching.py
 or 
-python3 face_recognition.py
+python3 face_matching.py
 ```
 
 ## Methods
 
 ```python
+
+  def anaysis_code(self, error_code):
+    '''!
+      @brief anaysis error code 
+      @param error_code
+      @return error cause
+    '''
+
   def begin(self):
     '''!
       @brief begin
-      @return True 
-    '''
-
-  def set_standby(self):
-    '''!
-      @brief Set it to standby mode. 
-      @n     The driver module can work properly only in this mode
-      @return True or False
+      @return True or False 
     '''
 
   def delete_face_id(self, number):

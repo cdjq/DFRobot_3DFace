@@ -1,11 +1,11 @@
  /*!
-  * @file  faceRecognition.ino
-  * @brief  face recognition demo
+  * @file  faceDelete.ino
+  * @brief  face delete demo
   * @copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
   * @license The MIT License (MIT)
   * @author ZhixinLiu(zhixin.liu@dfrobot.com)
   * @version V1.0
-  * @date 2023-12-07
+  * @date 2024-04-25
   * @url https://github.com/DFRobot/DFRobot_3DFace
   */
 
@@ -37,68 +37,37 @@
 void setup()
 {
   Serial.begin(115200);
-  while(!Serial);
-  randomSeed(analogRead(A0));
   while(!face.begin()){
     Serial.println("NO Deivces !");
     delay(1000);
   } Serial.println("Device connected!");
-
-
+  
   sUserData_t data = face.getFaceMessage();
   if(data.result == true){
     Serial.print("user number = ");
     Serial.println(data.user_count);
   }
-
-  char rName[40] = {0};
-  Serial.println("face resgistering !");
-  Serial.println("Please look straight into the camera.");
-  sFaceReg_t faceReg = face.directRegistration();
-  if(faceReg.result){
-    Serial.print("register      direction = ");
-    Serial.println(faceReg.direction);
-    Serial.println("Direct view record success");
-    Serial.println("Please look up.");
-    faceReg = face.lookUpRegistration();
+/*
+  if(face.delAllFaceID()){
+    Serial.println("delete all face success!");
   }
-  if(faceReg.result){
-    Serial.print("register      direction = ");
-    Serial.println(faceReg.direction);
-    Serial.println("look up record success");
-    Serial.println("Please look down.");
-    faceReg = face.lookDownRegistration();
-  }
-  if(faceReg.result){
-    Serial.print("register      direction = ");
-    Serial.println(faceReg.direction);
-    Serial.println("look down record success");
-    Serial.println("Please look to the left.");
-    faceReg = face.turnLeftRegistration();
-  }
-  if(faceReg.result){
-    Serial.print("register      direction = ");
-    Serial.println(faceReg.direction);
-    Serial.println("look left record success");
-    Serial.println("Please look to the right.");
-    uint16_t randNumber = random(analogRead(A0));
-    sprintf(rName, "fiveName%d", randNumber);
-    faceReg = face.turnRightRegistration(rName);
-  }
-
-  if(faceReg.result){
-    Serial.println("five face resgistering success!");
-    Serial.print("regiseter     user name = ");
-    Serial.println(rName);
-    Serial.print("regiseter     user id = ");
-    Serial.println(faceReg.userID);
+*/  
+  uint8_t number = 1;
+  if(face.delFaceID(number)){
+    Serial.print("success delete face id = ");
+    Serial.println(number);
   }else{
-    Serial.print("five face resgistering faild cause = ");
-    Serial.println(face.anaysisCode((eResponseCode_t)faceReg.errorCode));
+    Serial.print("faild delete face id = ");
+    Serial.println(number);
   }
 }
 
 void loop()
 {
+  sUserData_t data = face.getFaceMessage();
+  if(data.result == true){
+    Serial.print("user number = ");
+    Serial.println(data.user_count);
+  }
   delay(1000);
 }

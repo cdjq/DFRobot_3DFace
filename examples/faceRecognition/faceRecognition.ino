@@ -6,7 +6,7 @@
   * @author ZhixinLiu(zhixin.liu@dfrobot.com)
   * @version V1.0
   * @date 2023-12-07
-  * @url https://github.com/dfrobot/DFRobot_3DFace
+  * @url https://github.com/DFRobot/DFRobot_3DFace
   */
 
 #include "DFRobot_3DFace.h"
@@ -37,62 +37,40 @@
 void setup()
 {
   Serial.begin(115200);
+  while(!Serial);
+  randomSeed(analogRead(A0));
   while(!face.begin()){
     Serial.println("NO Deivces !");
     delay(1000);
-  } 
-  Serial.println("Device connected!");
-  face.setStandby();
+  } Serial.println("Device connected!");
 
-  sUserData_t data;
-  sFaceReg_t  faceReg;
-  data = face.getFaceMessage();
+  sUserData_t data = face.getFaceMessage();
   if(data.result == true){
-    Serial.print("user count = ");
+    Serial.print("user number = ");
     Serial.println(data.user_count);
   }
 
-  if(face.delAllFaceID()){
-    Serial.println("delete face id success!");
-  }
-
-  delay(2000);
   Serial.println("face resgistering !");
-  faceReg = face.faceRegistration("arduino test");
+  char rName[40] = {0};
+  uint16_t randNumber = random(analogRead(A0));
+  sprintf(rName, "rName%d", randNumber);
+  sFaceReg_t faceReg = face.faceRegistration(rName);
   if(faceReg.result){
     Serial.println("face resgistering success!");
+    Serial.print("regiseter     user name = ");
+    Serial.println(rName);
     Serial.print("regiseter     user id = ");
     Serial.println(faceReg.userID);
     Serial.print("register      direction = ");
     Serial.println(faceReg.direction);
     Serial.println();
   }else{
-    Serial.println("face resgistering error!");
-    Serial.print("error code = ");
-    Serial.println(faceReg.errorCode);
-    Serial.println();
+    Serial.print("face resgistering faild cause = ");
+    Serial.println(face.anaysisCode((eResponseCode_t)faceReg.errorCode));
   }
 }
 
 void loop()
 {
-  sFaceMatching_t matching;
-  Serial.println("face matching ..............");
-  matching = face.faceMatching();
-  if(matching.result){
-    Serial.println("face matching success!");
-    Serial.print("matching   user id = ");
-    Serial.println(matching.userID);
-    Serial.print("matching   name  = ");
-    Serial.println((char*)matching.name);
-    Serial.print("matching   admin = ");
-    Serial.println(matching.admin);
-    Serial.println();
-  }else{
-    Serial.println("face matching error !");
-    Serial.print("error code = ");
-    Serial.println(matching.errorCode);
-    Serial.println();
-  }
-  delay(3000);
+  delay(1000);
 }

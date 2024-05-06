@@ -12,8 +12,10 @@ DFRobot_3DFace_UART	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-setStandby	KEYWORD2
+begin	KEYWORD2
+anaysisCode	KEYWORD2
 delAllFaceID	KEYWORD2
+delFaceID	KEYWORD2
 faceMatching	KEYWORD2
 faceRegistration	KEYWORD2
 directRegistration	KEYWORD2

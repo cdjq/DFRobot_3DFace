@@ -12,8 +12,9 @@
 from __future__ import print_function
 import sys
 import os
-sys.path.append("../")
 import time
+import random
+sys.path.append("../")
 import RPi.GPIO as GPIO
 from DFRobot_3DFace import *
 
@@ -39,14 +40,9 @@ def setup():
   data = face.get_face_message()
   if data.result == True:
     print("user count = " + str(data.user_count))
-  status = face.delete_all_face_id()
-  if status == True:
-    print("delete face id success")
-  time.sleep(2)
   
   print("face resgistering !")
   print("Please look straight into the camera.")
-  
   face_reg = face.direct_registration()
   if face_reg.result:
     print("register direction = ", face_reg.direction)
@@ -65,36 +61,23 @@ def setup():
     print("look down view record success")
     print("Please look to the left.")
     face_reg = face.turn_left_registration()
-    
+  
+  random_int = random.randint(1, 1000)
+  result_string = "five_raspberry:" + str(random_int)
   if face_reg.result:
     print("register direction = ", face_reg.direction)
     print("turn left view record success")
     print("Please look to the right.")
-    face_reg = face.turn_right_registration("five_raspberry")
+    face_reg = face.turn_right_registration(result_string)
 
+  
   if face_reg.result:
-    print("turn right view record success")
     print("five face resgistering success!")
+    print("register name = "+str(result_string))
     print("register user id = ", face_reg.user_id)
     print("register direction = ", face_reg.direction)
   else:
-    print("five face resgistering error!");
-    print("error code = ", faceReg.errorCode)
-  
-
-def loop():
-  print("matching face .............")
-  match = face.face_matching()
-  if match.result:
-    print("matching success")
-    print("matching user ID = ", match.user_id)
-    print("matching name = ", match.name)
-    print("")
-  else:
-    print("matching error")
-    print("")
+    print("five register faild cause = "+ str(face.anaysis_code(face_reg.error_code)))
 
 if __name__ == "__main__":
   setup()
-  while True:
-    loop()

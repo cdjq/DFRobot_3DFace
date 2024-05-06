@@ -1,59 +1,113 @@
 /*!
  * @file DFRobot_3DFace.cpp
- * @brief Define the basic structure of the DFRobot_3DFace class, the implementation of the basic methods
- * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @brief Implemention of DFRobot_3DFace class
+ * @copyright	Copyright (c) 2021 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license The MIT License (MIT)
- * @author [ZhixinLiu](zhixin.liu@dfrobot.com)
+ * @author [qsjhyy](yihuan.huang@dfrobot.com)
  * @version V1.0
- * @date 2023-03-07
+ * @date 2024-01-06
  * @url https://github.com/DFRobot/DFRobot_3DFace
  */
 #include "DFRobot_3DFace.h"
 
-DFRobot_3DFace::DFRobot_3DFace(){}
-DFRobot_3DFace::~DFRobot_3DFace(){}
-
-bool DFRobot_3DFace::setStandby(void)
+DFRobot_3DFace::DFRobot_3DFace()
 {
-  uint16_t len = 0;
-  uint8_t tx_temp[40] = {0xEF, 0xAA, 0x23, 0x00, 0x00, 0x23};
-  uint8_t rx_temp[40] = {0x00};
-  writeReg(REG_WRITE_AT, tx_temp, 6);
-  while(1){
-    delay(100);
-    len = readReg(0, rx_temp, 0);
-    if(len != 0){
-      // for(uint8_t i = 0; i < len; i++){
-      //   Serial.print(rx_temp[i], HEX);
-      // } Serial.println();
+}
+
+bool DFRobot_3DFace::begin()
+{
+  uint8_t len = 0;
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+  len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+  while(len != 0){
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+    Serial.println(len,HEX);
+  }
+  return true;
+}
+bool DFRobot_3DFace::setStandby(void)
+{  
+  if(0 != getMoudleState()){
+    if(true == setStandbyMode()){
       return true;
+    }else{
+      return false;
     }
   }
   return true;
 }
 
+bool DFRobot_3DFace::setStandbyMode(void)
+{
+  uint16_t len = 0;
+  uint8_t timerout = 0;
+  int8_t count = -1;
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x23, 0x00, 0x00, 0x23};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+  writeReg(REG_WRITE_AT, tx_temp, 6);
+  while(1){
+    if(timerout++ > 100){
+      return false;
+    }
+    delay(100);
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+    if(len != 0){
+      count = waitMatch(rx_temp, len);
+      if(count != -1){
+        if(rx_temp[count+5] == 0x23 && rx_temp[6] == 0x00){
+          return true;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+
+uint8_t DFRobot_3DFace::getMoudleState(void)
+{
+  uint16_t len = 0;
+  int8_t count = -1;
+  uint8_t timerout = 0;
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x11, 0x00, 0x00, 0x11};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+  writeReg(REG_WRITE_AT, tx_temp, 6);
+  while(1){
+    if(timerout++ > 30){
+      return C_ERROR;
+    }
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+    delay(100);
+    if(len != 0){
+      count = waitMatch(rx_temp, len);
+      if(count != -1){
+        delay(100);
+        return rx_temp[count+7];
+      }
+    }
+  }
+}
+
 bool DFRobot_3DFace::delFaceID(uint16_t number)
 {
   uint16_t len = 0;
-  uint8_t tx_temp[10] = {0xEF, 0xAA, 0x20, 0x00, 0x02};
-  uint8_t rx_temp[50] = {0x00};
-  tx_temp[DATA_CODE] = (uint8_t)(number>>8);
-  tx_temp[DATA_CODE+1] = (uint8_t)(number);
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x20, 0x00, 0x02};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+  tx_temp[5] = (uint8_t)(number>>8);
+  tx_temp[6] = (uint8_t)(number);
   tx_temp[7] = getParityCheck(tx_temp, 7);
-
   setStandby();
   delay(100);
-
   writeReg(REG_WRITE_AT, tx_temp, 8);
-  delay(100);
-
   while(1){
     delay(100);
-    len = readReg(0, rx_temp, 0);
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
     if(len != 0){
       if(rx_temp[ERROR_CODE] == C_SUCCESS){
+        delay(100);
         return true;
       }else{
+        delay(100);
         return false;
       }
     }
@@ -64,15 +118,14 @@ bool DFRobot_3DFace::delFaceID(uint16_t number)
 bool DFRobot_3DFace::delAllFaceID(void)
 {
   uint16_t len = 0;
-  uint8_t tx_temp[10] = {0xEF, 0xAA, 0x21, 0x00, 0x00};
-  uint8_t rx_temp[40] = {0x00};
-  tx_temp[5] = getParityCheck(tx_temp, 5);
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x21, 0x00, 0x00, 0x21};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
   setStandby();
   delay(100);
   writeReg(REG_WRITE_AT, tx_temp, 6);
   while(1){
     delay(100);
-    len = readReg(0, rx_temp, 0);
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
     if(len != 0){
       if(rx_temp[ERROR_CODE] == C_SUCCESS){
         return true;
@@ -86,22 +139,22 @@ bool DFRobot_3DFace::delAllFaceID(void)
 
 sFaceReg_t DFRobot_3DFace::directRegistration(char* name, uint8_t timerout)
 {
-  return faceRegistration(NULL, ADMIN, eDirectView, FIVE_REG, true, timerout);
+  return faceRegistration(name, ADMIN, eDirectView, FIVE_REG, true, timerout);
 }
 
 sFaceReg_t DFRobot_3DFace::lookUpRegistration(char* name, uint8_t timerout)
 {
-  return faceRegistration(NULL, ADMIN, eLookUpView, FIVE_REG, true, timerout);
+  return faceRegistration(name, ADMIN, eLookUpView, FIVE_REG, true, timerout);
 }
 
 sFaceReg_t DFRobot_3DFace::lookDownRegistration(char* name, uint8_t timerout)
 {
-  return faceRegistration(NULL, ADMIN, eLookDownView, FIVE_REG, true, timerout);
+  return faceRegistration(name, ADMIN, eLookDownView, FIVE_REG, true, timerout);
 }
 
 sFaceReg_t DFRobot_3DFace::turnLeftRegistration(char* name, uint8_t timerout)
 {
-  return faceRegistration(NULL, ADMIN, eLookLeftView, FIVE_REG, true, timerout);
+  return faceRegistration(name, ADMIN, eLookLeftView, FIVE_REG, true, timerout);
 }
 
 sFaceReg_t DFRobot_3DFace::turnRightRegistration(char* name, uint8_t timerout)
@@ -113,8 +166,8 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
 {
   uint16_t len = 0;
   int8_t count = -1;
-  uint8_t tx_temp[50] = {0xEF, 0xAA, 0x26, 0x00, 0x28};
-  uint8_t rx_temp[200] = {0x00};
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x26, 0x00, 0x28};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
   sFaceReg_t data;
   tx_temp[5] = mode;
   if(name != NULL){
@@ -133,21 +186,20 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
   }
   writeReg(REG_WRITE_AT, tx_temp, 46);
   while(1){
-    delay(50);
+    delay(500);
     len = readReg(REG_READ_AT_LEN, rx_temp, 0);
     if(len != 0){
-      count = waitTrueData(rx_temp, len);
+      count = waitMatch(rx_temp, len);
       if(count != -1){
         delay(100);
         data.errorCode = rx_temp[count + 6];
-        if(rx_temp[count + 6] != C_SUCCESS){
-          data.result = false;
-        }else{
+        if(rx_temp[count + 6] == C_SUCCESS){
           data.result = true;
           data.userID = (uint16_t)((rx_temp[count+7]) << 8) | rx_temp[count+8];
           data.direction = rx_temp[count + 9];
+        }else{
+          data.result = false;
         }
-        len = readReg(REG_READ_AT_LEN, rx_temp, 0);
         if(regType == ONE_REG || direction == elookRightView){
           delay(100);
           setStandby();
@@ -158,100 +210,18 @@ sFaceReg_t DFRobot_3DFace::faceRegistration(char* name, uint8_t mode, eAngleView
   }
   return data;
 }
-sFaceMatching_t DFRobot_3DFace::faceMatching(void)
-{
-  sFaceMatching_t data;
-  uint8_t number = 0;
-  uint16_t len = 0;
-  int8_t count = -1;
-  uint8_t tx_temp[40] = {0xEF, 0xAA, 0x12, 0x00, 0x02};
-  uint8_t rx_temp[200] = {0x00};
-  tx_temp[5] = 0x00;
-  tx_temp[6] = 0x15;
-  tx_temp[7] = getParityCheck(tx_temp, 7);
-  setStandby();
-  delay(100);
-  writeReg(REG_WRITE_AT, tx_temp, 8);
-  while(1){
-    if(number++ > 20){
-      delay(100);
-      setStandby();
-      data.result = false;
-      return data;
-    }
-    //Serial.println(number);
-    delay(500);
-    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
-    if(len != 0){
-      count = waitTrueData(rx_temp, len);
-      if(count != -1){
-        data.errorCode = rx_temp[count + 6];
-        if(rx_temp[count + 6] != C_SUCCESS){
-          data.result = false;
-        }else{
-          data.result = true;
-          data.userID = (uint16_t)((rx_temp[count+7]) << 8) | rx_temp[count+8];
-          memcpy(data.name, &rx_temp[count+9],32);
-          data.admin = rx_temp[count+41];
-          data.state = rx_temp[count+42];
-        }
-        delay(100);
-        len = readReg(REG_READ_AT_LEN, rx_temp, 0);
-        delay(100);
-        count = waitTrueData(rx_temp, len);
-        data.errorCode = rx_temp[count + 6];
-        if(count != -1){
-          if(rx_temp[count + 6] != C_SUCCESS){
-            data.result = false;
-          }else{
-            data.result = true;
-            data.userID = (uint16_t)((rx_temp[count+7]) << 8) | rx_temp[count+8];
-            memcpy(data.name, &rx_temp[count+9],32);
-            data.admin = rx_temp[count+41];
-            data.state = rx_temp[count+42];
-          }
-        }
-        delay(100);
-        setStandby();
-        return data;
-      }
-    }
-  }
-}
 
-int8_t DFRobot_3DFace::waitTrueData(uint8_t *data, uint8_t len)
-{
-  uint8_t count = 0;
-  uint8_t temp[2] = {0x00};
-  for(uint8_t i = 0; i < len; i++){
-    if(data[i] == 0xEF){
-      temp[count++] = i;
-    }
-  }
-  // for(uint8_t i = 0; i < len; i++){
-  //   Serial.print(data[i] ,HEX);
-  //   Serial.print(" ");
-  // } Serial.println();
-  if(count == 2){
-    return temp[1];
-  }
-  if(data[0] == 0xEF && data[1] == 0xAA && data[2] == 0x00){
-    return 0;
-  }
-  return -1;
-}
 sUserData_t DFRobot_3DFace::getFaceMessage(void)
 {
   sUserData_t data;
   uint16_t len = 0;
-  uint8_t tx_temp[10] = {0xEF, 0xAA, 0x24, 0x00, 0x00};
-  uint8_t rx_temp[300] = {0x00};
-  tx_temp[5] = getParityCheck(tx_temp, 5);
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x24, 0x00, 0x00, 0x24};
+  uint8_t rx_temp[210] = {0x00};
   setStandby();
   delay(100);
   writeReg(REG_WRITE_AT, tx_temp, 6);
   delay(100);
-  len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+  len = readReg(REG_READ_AT_LEN, rx_temp, 210);
   if(len != 0){
     if(rx_temp[ERROR_CODE] != C_SUCCESS){
       data.result = false;
@@ -264,6 +234,89 @@ sUserData_t DFRobot_3DFace::getFaceMessage(void)
   }
   return data;
 }
+sFaceMatching_t DFRobot_3DFace::faceMatching(void)
+{
+  sFaceMatching_t data;
+  uint8_t number = 0;
+  uint16_t len = 0;
+  int8_t count = -1;
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0xEF, 0xAA, 0x12, 0x00, 0x02};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+  tx_temp[5] = 0x00;
+  tx_temp[6] = 0x0A;
+  tx_temp[7] = getParityCheck(tx_temp, 7);
+  setStandby();
+  delay(100);
+  writeReg(REG_WRITE_AT, tx_temp, 8);
+  while(1){
+    if(number++ > 100){
+      setStandby();
+      data.result = false;
+      return data;
+    }
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+    delay(100);
+    if(len != 0){
+      count = waitMatch(rx_temp, len);
+      if(count != -1){
+        data.errorCode = rx_temp[count + 6];
+        if(rx_temp[count + 6] == C_SUCCESS){
+          data.result = true;
+          data.userID = (uint16_t)((rx_temp[count+7]) << 8) | rx_temp[count+8];
+          memcpy(data.name, &rx_temp[count+9],32);
+          data.admin = rx_temp[count+41];
+          data.state = rx_temp[count+42];
+        }else{
+          data.result = false;
+        }
+        delay(100);
+        setStandby();
+        return data;
+      }
+    }
+  }
+}
+const char * DFRobot_3DFace::anaysisCode(eResponseCode_t errorCode)
+{
+  switch (errorCode){
+    case eReject:
+      return "rejected the command";
+    case eTermination:
+      return "input/matching algorithm has been terminated";
+    case eMessErr:
+      return "Sending message error";
+    case eCrameErr:
+      return "Camera failed to open";
+    case eError:
+      return "unknown error";
+    case eParamErr:
+      return "Invalid parameter";
+    case eMemoryErr:
+      return "memory less";
+    case eUserNoExist:
+      return "no recorded users";
+    case eUserUserLimit:
+      return "record exceeds the maximum user";
+    case eFaceExist:
+      return "Face has been recorded";
+    case eLivingErr:
+      return "Biopsy failure";
+    case eTimerout:
+      return "timer out";
+    default:
+      return "timer out";
+  }
+}
+
+int8_t DFRobot_3DFace::waitMatch(uint8_t *data, uint8_t len)
+{
+  for(uint8_t i = 0; i < len; i++){
+    if(data[i] == 0xEF && data[i+1] == 0xAA && data[i+2] == 0x00){
+      return i;
+    }
+  }
+  return -1;
+}
 
 uint8_t DFRobot_3DFace::getParityCheck(uint8_t * p ,int len)
 {
@@ -274,146 +327,195 @@ uint8_t DFRobot_3DFace::getParityCheck(uint8_t * p ,int len)
   return parityCheck;
 }
 
-
-DFRobot_3DFace_I2C::DFRobot_3DFace_I2C(TwoWire *pWire, uint8_t addr)
+DFRobot_3DFace_I2C::DFRobot_3DFace_I2C(TwoWire* pWire, uint8_t addr)
 {
   _pWire = pWire;
-  this->_I2C_addr = addr;
-  uartI2CFlag = I2C_FLAG;
+  _deviceAddr = addr;
 }
 
 bool DFRobot_3DFace_I2C::begin()
 {
   _pWire->begin();
-  _pWire->beginTransmission(_I2C_addr);
-  if(_pWire->endTransmission() == 0){
-    return true;
-  }else{
+  _pWire->beginTransmission(_deviceAddr);
+  if (_pWire->endTransmission() != 0) {
+    DBG("I2C init error!!!!");
     return false;
   }
+  return DFRobot_3DFace::begin();
 }
 
-void DFRobot_3DFace_I2C::writeReg(uint8_t reg, uint8_t *data, uint8_t len)
+void DFRobot_3DFace_I2C::writeReg(uint8_t reg, void* pBuf, size_t size)
 {
+  if (pBuf == NULL) {
+    DBG("pBuf ERROR!! : null pointer");
+  }
+  uint8_t* _pBuf = (uint8_t*)pBuf;
+  uint16_t len = (uint16_t)size;
   if(len > 31){
-    _pWire->beginTransmission(this->_I2C_addr);
+    _pWire->beginTransmission(_deviceAddr);
     _pWire->write(REG_WRITE_AT_LONG);
-    _pWire->write(data, 31);
+    _pWire->write(_pBuf, 31);
     _pWire->endTransmission(false);
     len -= 31;
-    _pWire->beginTransmission(this->_I2C_addr);
+    _pWire->beginTransmission(_deviceAddr);
     _pWire->write(reg);
-    _pWire->write(data+31, len);
+    _pWire->write(_pBuf+31, len);
     _pWire->endTransmission();
   }else{
-    _pWire->beginTransmission(this->_I2C_addr);
+    _pWire->beginTransmission(_deviceAddr);
     _pWire->write(reg);
-    _pWire->write(data, len);
+    _pWire->write(_pBuf, len);
     _pWire->endTransmission();
   }
 }
 
-int16_t DFRobot_3DFace_I2C::readReg(uint8_t reg,uint8_t *data,uint8_t len)
+uint8_t DFRobot_3DFace_I2C::readReg(uint8_t reg, void* pBuf, size_t size)
 {
-  /* i2c get data */
+  if (pBuf == NULL) {
+    DBG("pBuf ERROR!! : null pointer");
+  }
+  uint8_t* _pBuf = (uint8_t*)pBuf;
   uint8_t i = 0, rxLen = 0;
-  _pWire->beginTransmission(this->_I2C_addr);
+  uint8_t max_len = 0;
+  if(size == 0){
+    max_len = RX_MAX_LENGTH;
+  }else{
+    max_len = size;
+  }
+  _pWire->beginTransmission(_deviceAddr);
   _pWire->write(REG_READ_AT_LEN);
   if(_pWire->endTransmission() != 0){
-    return -1;
+    DBG("iic connect failed");
+    return 0;
   }
-  _pWire->requestFrom((uint8_t)this->_I2C_addr,(uint8_t)5);
+  _pWire->requestFrom((uint8_t)_deviceAddr,(uint8_t)5);
   while (_pWire->available()){
-    data[i++]=_pWire->read();
+    _pBuf[i++]=_pWire->read();
   }
-  rxLen = data[0];
+  rxLen = _pBuf[0];
   i = 0;
   if(rxLen == 0){
-    return 0;       // data = 0;
+    return 0;
   }else{
-    // Serial.print("rxLen    =   ");
-    // Serial.println(rxLen);
     while(rxLen){
       if(rxLen > 32){
-        _pWire->beginTransmission(this->_I2C_addr);
+        _pWire->beginTransmission(_deviceAddr);
         _pWire->write(REG_READ_AT);
         if(_pWire->endTransmission() != 0){
-          return -1;
+          DBG("iic connect failed");
+          return 0;
         }
-        _pWire->requestFrom((uint8_t)this->_I2C_addr,(uint8_t)32);
+        _pWire->requestFrom((uint8_t)_deviceAddr,(uint8_t)32);
         while(_pWire->available()){
-          data[i++]=_pWire->read();
+          _pBuf[i++]=_pWire->read();
+          if(i == max_len){
+            i = 0;
+          }
         }
         rxLen -= 32;
       }else{
-        _pWire->beginTransmission(this->_I2C_addr);
+        _pWire->beginTransmission(_deviceAddr);
         _pWire->write(REG_READ_AT);
         if(_pWire->endTransmission() != 0){
-          return -1;
+          DBG("iic connect failed");
+          return 0;
         }
-        _pWire->requestFrom((uint8_t)this->_I2C_addr,(uint8_t)rxLen);
+        _pWire->requestFrom((uint8_t)_deviceAddr,(uint8_t)rxLen);
         while(_pWire->available()){
-          data[i++]=_pWire->read();
+          _pBuf[i++]=_pWire->read();
+          if(i == max_len){
+            i = 0;
+          }
         }
         rxLen = 0;
       }
     }
   }
+  reg = size;
+  size = reg;
   return i;
 }
 
-
-
-
 #if defined(ARDUINO_AVR_UNO) || defined(ESP8266)
-  DFRobot_3DFace_UART::DFRobot_3DFace_UART(SoftwareSerial *sSerial, uint32_t Baud)
-  {
-    this->_serial = sSerial;
-    this->_baud = Baud;
-    uartI2CFlag = UART_FLAG;
-    _serial->begin(this->_baud);
-  }
+DFRobot_3DFace_UART::DFRobot_3DFace_UART(SoftwareSerial* sSerial, uint32_t Baud)
+{
+  _serial = sSerial;
+  _baud = Baud;
+  // _serial->begin(_baud);
+}
 #else
-  DFRobot_3DFace_UART::DFRobot_3DFace_UART(HardwareSerial *hSerial, uint32_t Baud ,uint8_t txpin, uint8_t rxpin)
-  {
-    this->_serial = hSerial;
-    this->_baud = Baud;
-    uartI2CFlag = UART_FLAG;
-    this->_txpin = txpin;
-    this->_rxpin = rxpin;
-  }
+DFRobot_3DFace_UART::DFRobot_3DFace_UART(HardwareSerial* hSerial, uint32_t Baud, uint8_t txpin, uint8_t rxpin)
+{
+  _serial = hSerial;
+  _baud = Baud;
+  _txpin = txpin;
+  _rxpin = rxpin;
+}
 #endif
 
-bool DFRobot_3DFace_UART::begin()
+bool DFRobot_3DFace_UART::begin(void)
 {
-  uint8_t rx_temp[40] = {0x00};
-  int len = 0;
-  #ifdef ESP32
-    _serial->begin(this->_baud, SERIAL_8N1, _txpin, _rxpin);
-  #elif defined(ARDUINO_AVR_UNO) || defined(ESP8266)
+  uint16_t len = 0;
+  uint8_t tx_temp[TX_MAX_LENGTH] = {0x55};
+  uint8_t rx_temp[RX_MAX_LENGTH] = {0x00};
+#ifdef ESP32
+  _serial->begin(_baud, SERIAL_8N1, _txpin, _rxpin);
+  // #elif defined(ARDUINO_AVR_UNO) || defined(ESP8266)
     // nothing use software
-  #else
-    _serial->begin(this->_baud);  // M0 cannot create a begin in a construct
-  #endif
-  len = readReg(0, rx_temp, 0);
+#else
+  _serial->begin(_baud);  // M0 cannot create a begin in a construct
+#endif
+
+  writeReg(REG_WRITE_AT, tx_temp, 1);
+  while(1){
+    len = readReg(REG_READ_AT_LEN, rx_temp, 0);
+    delay(100);
+    if(len != 0){
+      if(rx_temp[0] == 0x55){
+        return true;
+      }else{
+        return false;
+      }
+    }
+  }
   return true;
 }
 
-void DFRobot_3DFace_UART::writeReg(uint8_t reg, uint8_t *data, uint8_t len)
+void DFRobot_3DFace_UART::writeReg(uint8_t reg, void* pBuf, size_t size)
 {
-  for(uint8_t i = 0; i < len; i++){
-    _serial->write(data[i]);
+  if (pBuf == NULL) {
+    DBG("pBuf ERROR!! : null pointer");
   }
+  uint8_t* _pBuf = (uint8_t*)pBuf;
+  for(uint8_t i = 0; i < size; i++){
+    _serial->write(_pBuf[i]);  
+  }
+  size = reg;
 }
 
-int16_t DFRobot_3DFace_UART::readReg(uint8_t reg, uint8_t *data, uint8_t len)
+uint8_t DFRobot_3DFace_UART::readReg(uint8_t reg, void* pBuf, size_t size)
 {
-  uint16_t i = 0;
+  if (pBuf == NULL) {
+    DBG("pBuf ERROR!! : null pointer");
+  }
+  uint8_t* _pBuf = (uint8_t*)pBuf;
+  uint8_t i = 0;
+  uint8_t max_len = 0;
+  if(size == 0){
+    max_len = RX_MAX_LENGTH;
+  }else{
+    max_len = size;
+  }
   uint32_t nowtime = millis();
   while(millis() - nowtime < TIME_OUT){
     while(_serial->available() > 0){
-      data[i++] = _serial->read();
+      _pBuf[i++] = _serial->read();
+      if(i == max_len){
+        i = 0;
+      }
     }
   }
+  size = reg;
+  reg = size;
   return i;
 }

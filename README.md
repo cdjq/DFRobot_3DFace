@@ -3,11 +3,11 @@
 
 This is a built-in self-developed embedded system 3D depth restoration algorithm, 3D face recognition algorithm and multi-modal live prevention algorithm, which can effectively protect user information and unlock security, under the premise of 99% pass rate, can achieve less than one million error rate. At the same time, the multi-modal live anti-counterfeiting algorithm can effectively shield the attacks of photos, videos and various head models and dummies.
 
-![效果图](resources/images/xxx.jpg)
+![效果图](resources/images/SEN0625.jpg)
 
 ## Product Link(https://www.dfrobot.com/)
 
-    SKU：xxx
+    SKU：SEN0625
 
 ## Table of Contents
 
@@ -33,12 +33,25 @@ There are two methods for using this library:<br>
 
 ```C++
   /**
-   * @fn setStandby
-   * @brief Set it to standby mode. 
-   * @n     The driver module can work properly only in this mode
-   * @return true or false
+   * @fn anaysisCode
+   * @brief anaysis error code
+   * @param errorCode
+   * @n       eSuccess
+   * @n       eReject
+   * @n       eTermination
+   * @n       eMessErr
+   * @n       eCrameErr
+   * @n       eError
+   * @n       eParamErr
+   * @n       eMemoryErr
+   * @n       eUserNoExist
+   * @n       eUserUserLimit
+   * @n       eFaceExist
+   * @n       eLivingErr
+   * @n       eTimerout
+   * @return cause string
    */
-  bool setStandby(void);
+  const char *anaysisCode(eResponseCode_t errorCode);
 
   /**
    * @fn delFaceID

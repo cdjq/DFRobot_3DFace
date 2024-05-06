@@ -1,22 +1,23 @@
+
 # -*- coding: utf-8 -*
 '''!
-  @file face_recoognition.py
-  @brief Register and recognize faces
+  @file face_matching.py
+  @brief Five things to register and recognize faces
   @copyright  Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
   @license    The MIT License (MIT)
   @author     [ZhixinLiu](zhixin.liu@dfrobot.com)
   @version    V1.0
-  @date       2024-02-27
+  @date       2024-2-28
   @url https://github.com/DFRobot/DFRobot_3DFace
 '''
 from __future__ import print_function
 import sys
 import os
-import time
-import random
 sys.path.append("../")
+import time
 import RPi.GPIO as GPIO
 from DFRobot_3DFace import *
+
 
 '''
   Select to use i2c or UART
@@ -36,26 +37,23 @@ def setup():
   while (face.begin() == False):
     print("Sensor initialize failed!!")
     time.sleep(1)
-
-  print("Sensor initialize success!!")  
   data = face.get_face_message()
   if data.result == True:
     print("user count = " + str(data.user_count))
-    
-  print("face resgistering !")
-  random_int = random.randint(1, 1000)
-  result_string = "raspberry:" + str(random_int)
-  face_reg = face.face_registration(result_string)
-  if face_reg.result == True:
-    print("face resgistering success!")
-    print("register name = "+str(result_string))
-    print("register user id = " + str(face_reg.user_id));
-    print("register direction = " + str(face_reg.direction))
-  else:
-    print("five register faild cause = "+ str(face.anaysis_code(face_reg.error_code)))
-    
+  
+
 def loop():
-  time.sleep(1)
+  print("matching face .............")
+  match = face.face_matching()
+  if match.result:
+    print("matching success")
+    print("matching user ID = ", match.user_id)
+    print("matching name = ", match.name)
+    print("")
+  else:
+    print("matching error cause = "+ str(face.anaysis_code(match.error_code)))
 
 if __name__ == "__main__":
   setup()
+  while True:
+    loop()
